@@ -48,3 +48,33 @@ echo ">>> Archiving of ${name}-httpd-logs-${timestamp}.tar Complete and Exists i
 echo ">>> Uploading Archive to S3 Bucket"
 aws s3 cp /tmp/${name}-httpd-logs-${timestamp}.tar s3://${s3_bucket}
 echo ">>> Archive Upload Complete. Please check your S3 Bucket"
+
+# Initiliaze Inventory File Variables
+inventoryFile=/var/www/html/inventory.html
+logType="httpd-logs"
+filename=${name}-httpd-logs-${timestamp}.tar
+type=${filename##*.}
+size=$(ls -lh /tmp/${filename}| cut -d " " -f5)
+
+# Inventory.html File Existence Check
+if ! test -f "$inventoryFile"; 
+then
+	echo ">>> Inventory File Is Missing, Creating Inventory File";
+		touch ${inventoryFile}
+		echo "<html>">${inventoryFile}
+        echo "<b>Log Type&nbsp;&nbsp;&nbsp;&nbsp;Time Created&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Type&nbsp;&nbsp;Size</b>">${inventoryFile}
+	fi
+		echo "<br>${logType}&nbsp;&nbsp;&nbsp;&nbsp;${timestamp}&nbsp;&nbsp;&nbsp;&nbsp;${type}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${size}">>${inventoryFile}
+		echo "Inventory file has been updated";
+
+# Cron Job File Existence Check
+cronFile=/etc/cron.d/automation
+if test -f "$cronFile"; 
+then
+	echo ">>> Cron Job File Available";
+else
+	echo ">>> Cron Job File Missing, Creating a Cron Job File";
+	touch ${cronFile}
+	echo '0 0 * * * root /root/Automation_Project/automation.sh'>${cronFile}
+	echo ">>> Cron Job File Created";
+fi
